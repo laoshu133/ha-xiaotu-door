@@ -1,0 +1,16 @@
+{
+  "domain": "xiaotu_door",
+  "name": "XiaoTu Door",
+  "version": "0.0.1",
+  "codeowners": [
+    "@laoshu133"
+  ],
+  "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://www.home-assistant.io/integrations/xiaotu_door",
+  "homekit": {},
+  "iot_class": "assumed_state",
+  "requirements": [],
+  "ssdp": [],
+  "zeroconf": []
+}
