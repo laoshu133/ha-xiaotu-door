@@ -6,7 +6,7 @@ import datetime
 # import json
 import logging
 
-from .dao import Device, Lock
+from .dao import BaseDevice, LockDevice
 
 VALID_UNTIL_OFFSET = datetime.timedelta(seconds=10)
 
@@ -17,7 +17,7 @@ _LOGGER = logging.getLogger(__name__)
 class XiaoTuAccount:
     """Create a new connection to the XiaoTu web service."""
 
-    devices: list[Device] = field(default_factory=list, init=False)
+    devices: list[BaseDevice] = field(default_factory=list, init=False)
 
     def __init__(self, config: dict) -> None:
         """Initialize the account."""
@@ -85,14 +85,14 @@ class XiaoTuAccount:
             existing_device.update_state(data)
         else:
             clssMap = {
-                "lock": Lock,
-                "device": Device,
+                "lock": LockDevice,
+                "device": BaseDevice,
             }
 
-            Cls = clssMap.get(data["type"], Device)
+            Cls = clssMap.get(data["type"], BaseDevice)
             self.devices.append(Cls(data))
 
-    def get_device(self, id: str) -> Device | None:
+    def get_device(self, id: str) -> BaseDevice | None:
         """Get device with given id.
 
         The search is NOT case sensitive.

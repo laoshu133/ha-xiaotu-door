@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import timedelta
 import logging
 
@@ -43,6 +44,10 @@ class XiaoTuCoordinator(DataUpdateCoordinator[None]):
 
         # Default to false on init so _async_update_data logic works
         self.last_update_success = False
+
+    # async def _fetch_device_state(self) -> None:
+    #     """Fetch device state."""
+    #     await self.account.get_devices()
 
     async def _async_update_data(self) -> None:
         """Fetch data from XiaoTu."""

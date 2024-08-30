@@ -1,5 +1,14 @@
 """DAO."""
 
+import asyncio
+import logging
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .entity import BaseEntity
+
+_LOGGER = logging.getLogger(__name__)
+
 
 class Device:
     """Base Device."""
@@ -15,12 +24,28 @@ class Device:
         self.alias: str = ""
         self.fetched_at = None
 
-        self.update_state(base_data)
+        self.set_state(base_data)
 
-    def update_state(self, data: dict) -> None:
+    def set_state(self, data: dict) -> None:
         """Update the state."""
 
         [setattr(self, k, v) for k, v in data.items()]
+
+    async def push_state(self, entity, data: dict) -> None:
+        """Push state to server."""
+
+        _LOGGER.info(1111)
+
+        await asyncio.sleep(3)
+
+        self.set_state(data)
+
+        _LOGGER.info(22222)
+        _LOGGER.info(self)
+
+        # Always update the listeners to get the latest state
+        if entity.coordinator:
+            entity.coordinator.async_update_listeners()
 
     # # # # # # # # # # # # # # #
     # Generic attributes
@@ -47,7 +72,7 @@ class BaseDevice(Device):
         self.brand_name = "XiaoTu"
 
 
-class Lock(BaseDevice):
+class LockDevice(BaseDevice):
     """Lock Device."""
 
     def __init__(self, base_data: dict) -> None:

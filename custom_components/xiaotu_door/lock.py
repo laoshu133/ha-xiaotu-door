@@ -8,7 +8,7 @@ from homeassistant.components.lock import LockEntity
 from homeassistant.core import HomeAssistant, callback
 
 from .coordinator import XiaoTuCoordinator
-from .dao import BaseDevice
+from .dao import LockDevice
 from .entity import BaseEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,42 +32,42 @@ class XiaoTuDoorLock(BaseEntity, LockEntity):
 
     _attr_translation_key = "lock"
 
-    def __init__(self, coordinator: XiaoTuCoordinator, device: BaseDevice) -> None:
+    def __init__(self, coordinator: XiaoTuCoordinator, device: LockDevice) -> None:
         """Initialize the lock."""
         super().__init__(coordinator, device)
 
         self._attr_is_locked = device.is_locked
 
-        _LOGGER.info(11111)
-        _LOGGER.info(self)
-
     async def async_lock(self, **kwargs) -> None:
         """Lock the door."""
-        _LOGGER.debug("%s: locking doors", self.device.name)
 
-        # Optimistic state set here because it takes some time before the update callback response
-        self._attr_is_locked = True
+        # Locking the door
+        self._attr_is_locking = True
         self.async_write_ha_state()
 
-        # Always update the listeners to get the latest state
-        self.coordinator.async_update_listeners()
+        await self.device.push_state(self, {"is_locked": True})
 
     async def async_unlock(self, **kwargs) -> None:
         """Unlock the door."""
-        # Optimistic state set here because it takes some time before the update callback response
-        self._attr_is_locked = False
+
+        # Unlocking the door
+        self._attr_is_unlocking = True
         self.async_write_ha_state()
 
-        # Always update the listeners to get the latest state
-        self.coordinator.async_update_listeners()
+        await self.device.push_state(self, {"is_locked": False})
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        _LOGGER.debug("Updating lock data of %s", self.device.name)
+        _LOGGER.info("Updating lock data of %s", self.device.name)
 
         # Update the HA state
         if self.device.is_locked != self._attr_is_locked:
             self._attr_is_locked = self.device.is_locked
 
+        # Reset ing state
+        self._attr_is_unlocking = False
+        self._attr_is_locking = False
+
+        # self.async_write_ha_state
         super()._handle_coordinator_update()
