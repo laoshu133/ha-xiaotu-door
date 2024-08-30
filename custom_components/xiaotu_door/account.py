@@ -6,7 +6,7 @@ import datetime
 # import json
 import logging
 
-from .dao import Device
+from .dao import Device, Lock
 
 VALID_UNTIL_OFFSET = datetime.timedelta(seconds=10)
 
@@ -31,7 +31,7 @@ class XiaoTuAccount:
         }
 
         # Debug
-        self.add_device({"id": "1", "name": "Device 1"})
+        self.add_device({"id": "1", "type": "lock", "name": "Lock 001"})
 
     async def _init_devices(self) -> None:
         """Initialize devices from servers."""
@@ -62,7 +62,7 @@ class XiaoTuAccount:
         #         # Always log the error
         #         _LOGGER.error(
         #             "Unable to get details for device %s - (%s) %s",
-        #             device.vin,
+        #             device.id,
         #             type(ex).__name__,
         #             ex,
         #         )
@@ -71,20 +71,26 @@ class XiaoTuAccount:
         #         if error_count == len(self.devices):
         #             raise ex  # noqa: TRY201
 
-    async def add_device(
+    def add_device(
         self,
-        device_base: dict,
+        data: dict,
         fetched_at: datetime.datetime | None = None,
     ) -> None:
-        """Add or update a device from the API responses."""
+        """Add a device."""
 
-        existing_device = self.get_device(device_base["id"])
+        existing_device = self.get_device(data["id"])
 
         # If device already exists, just update it's state
         if existing_device:
-            await existing_device.get_device_state()
+            existing_device.update_state(data)
         else:
-            self.devices.append(Device(self))
+            clssMap = {
+                "lock": Lock,
+                "device": Device,
+            }
+
+            Cls = clssMap.get(data["type"], Device)
+            self.devices.append(Cls(data))
 
     def get_device(self, id: str) -> Device | None:
         """Get device with given id.

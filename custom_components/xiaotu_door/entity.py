@@ -5,9 +5,9 @@ from __future__ import annotations
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .base_device import BaseDeivce
 from .const import DOMAIN
 from .coordinator import XiaoTuCoordinator
+from .dao import BaseDevice
 
 
 class BaseEntity(CoordinatorEntity[XiaoTuCoordinator]):
@@ -18,19 +18,21 @@ class BaseEntity(CoordinatorEntity[XiaoTuCoordinator]):
     def __init__(
         self,
         coordinator: XiaoTuCoordinator,
-        device: BaseDeivce,
+        device: BaseDevice,
     ) -> None:
         """Initialize entity."""
         super().__init__(coordinator)
 
         self.device = device
 
+        self._attr_name = ""
+        self._attr_unique_id = f"{DOMAIN}_{device.type}_{device.id}"
         self._attr_device_info = DeviceInfo(
+            manufacturer=device.brand_name,
             identifiers={(DOMAIN, device.id)},
-            manufacturer=device.name,
-            model=device.name,
+            model={(DOMAIN, ".", device.type)},
             name=device.name,
-            serial_number=device.id,
+            # serial_number=device.id,
         )
 
     async def async_added_to_hass(self) -> None:

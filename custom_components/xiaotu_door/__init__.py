@@ -33,7 +33,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     # Clean up devices which are not assigned to the account anymore
-    account_devices = {(DOMAIN, v.vin) for v in coordinator.account.devices}
+    account_devices = {(DOMAIN, v.id) for v in coordinator.account.devices}
     device_registry = dr.async_get(hass)
     device_entries = dr.async_entries_for_config_entry(
         device_registry, config_entry_id=entry.entry_id

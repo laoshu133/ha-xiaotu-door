@@ -7,8 +7,8 @@ import logging
 from homeassistant.components.lock import LockEntity
 from homeassistant.core import HomeAssistant, callback
 
-from .base_device import BaseDeivce
 from .coordinator import XiaoTuCoordinator
+from .dao import BaseDevice
 from .entity import BaseEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -20,8 +20,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
 
     entities = [
         XiaoTuDoorLock(coordinator, device)
-        for zone in coordinator.account.zones
-        for device in zone.devices
+        for device in coordinator.account.devices
         if device.type == "lock"
     ]
 
@@ -33,13 +32,14 @@ class XiaoTuDoorLock(BaseEntity, LockEntity):
 
     _attr_translation_key = "lock"
 
-    def __init__(self, coordinator: XiaoTuCoordinator, device: BaseDeivce) -> None:
+    def __init__(self, coordinator: XiaoTuCoordinator, device: BaseDevice) -> None:
         """Initialize the lock."""
         super().__init__(coordinator, device)
 
-        # self.name = "A XiaoTu Door Lock"
-        self._attr_unique_id = f"{device.zone.id}_{device.id}"
         self._attr_is_locked = device.is_locked
+
+        _LOGGER.info(11111)
+        _LOGGER.info(self)
 
     async def async_lock(self, **kwargs) -> None:
         """Lock the door."""
