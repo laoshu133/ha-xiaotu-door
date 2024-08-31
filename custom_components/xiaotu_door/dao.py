@@ -100,25 +100,22 @@ class LockDevice(BaseDevice):
     async def push_state(self, entity, data: dict) -> None:
         """Push state to server."""
 
-        account = entity.coordinator.account
-        auth = await account.get_auth()
-
         # Open the door
-        params = {
-            "clientId": auth.client_id,
-            "doorId": self.doorId,
-            "longitude": "",
-            "latitude": "",
-        }
-        await account.api.get(
-            "/wap/door/openDoorNew", params=params, headers={"tokenId": auth.token_id}
-        )
+        try:
+            account = entity.coordinator.account
+            auth = await account.get_auth()
 
-        # Delay to simulate the door opening
-        await asyncio.sleep(1)
+            params = {
+                "clientId": auth.client_id,
+                "doorId": self.doorId,
+                "longitude": "",
+                "latitude": "",
+            }
 
-        self.set_state(data)
-
-        # Always update the listeners to get the latest state
-        if entity.coordinator:
-            entity.coordinator.async_update_listeners()
+            await account.api.get(
+                "/wap/door/openDoorNew",
+                params=params,
+                headers={"tokenId": auth.token_id},
+            )
+        finally:
+            await super().push_state(entity, data)

@@ -20,7 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up XiaoTu Door from a config entry."""
 
-    _LOGGER.info(f"{DOMAIN}: {entry.entry_id}")  # noqa: G004
+    _LOGGER.info(f"{DOMAIN}.config_entity: {entry.entry_id}")  # noqa: G004
 
     # Set up one data coordinator per account/config entry
     coordinator = XiaoTuCoordinator(hass, entry)

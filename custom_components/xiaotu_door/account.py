@@ -11,7 +11,7 @@ import logging
 from .api import API, APIConfiguration
 from .dao import BaseDevice, LockDevice
 
-AUTH_VALID_OFFSET = datetime.timedelta(hours=1)
+AUTH_VALID_OFFSET = datetime.timedelta(hours=5)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -68,15 +68,26 @@ class XiaoTuAccount:
     def __init__(self, config: dict) -> None:
         """Initialize the account."""
 
-        self.api_config = APIConfiguration(**config)
+        auth = XiaoTuAccountAuth()
+        api_config = APIConfiguration(**config)
+
+        self.auth = auth
+        self.api_config = api_config
         self.api = API(self.api_config)
-        self.auth = XiaoTuAccountAuth()
         self.user = XiaoTuUser()
         self.devices = []
         self.fetched_at = None
 
-        # # Debug
-        # self.add_device({"id": "1", "type": "lock", "name": "Lock 001"})
+        # init token
+        init_token = config.get("init_token")
+        if init_token:
+            auth.client_id = api_config.password
+            auth.token_id = init_token.get("token_id", "")
+            auth.fetched_at = datetime.datetime.fromisoformat(
+                init_token.get("fetched_at")
+            )
+
+        _LOGGER.info("XiaoTuAccount.init_auth: %s", self.auth)
 
     async def get_auth(self) -> None:
         """Get the authentication data."""

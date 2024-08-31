@@ -27,6 +27,7 @@ class APIConfiguration:
     """Stores global settings for API."""
 
     host: str = DEFAULT_API_HOST
+    init_token: dict[str, str] | None = None
     username: str = ""
     password: str = ""
 

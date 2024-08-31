@@ -45,6 +45,14 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
 
                 account = XiaoTuAccount(user_input)
                 user = await account.get_user()
+
+                # Add init token
+                user_input["init_token"] = {
+                    "token_id": account.auth.token_id,
+                    "fetched_at": account.auth.fetched_at,
+                }
+
+                _LOGGER.info("User user_input: %s", user_input)
             except Exception:
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"

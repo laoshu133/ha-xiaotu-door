@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import timedelta
 import logging
 
 from httpx import RequestError
@@ -12,8 +11,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .account import XiaoTuAccount
-from .const import CONF_REFRESH_TOKEN, DOMAIN
+from .account import AUTH_VALID_OFFSET, XiaoTuAccount
+from .const import DOMAIN
 from .utils import APIError, AuthError
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,8 +34,8 @@ class XiaoTuCoordinator(DataUpdateCoordinator[None]):
         super().__init__(
             hass,
             _LOGGER,
-            name=f"{DOMAIN}-{entry.data['username']}",
-            update_interval=timedelta(seconds=600),
+            name=f"{DOMAIN}_{entry.entry_id}",
+            update_interval=AUTH_VALID_OFFSET / 2,
         )
 
         # Default to false on init so _async_update_data logic works

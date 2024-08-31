@@ -30,6 +30,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
 class XiaoTuDoorLock(BaseEntity, LockEntity):
     """A XiaoTu Door Lock."""
 
+    device: LockDevice
     _attr_translation_key = "lock"
 
     def __init__(self, coordinator: XiaoTuCoordinator, device: LockDevice) -> None:
