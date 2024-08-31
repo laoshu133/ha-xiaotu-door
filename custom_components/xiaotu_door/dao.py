@@ -117,5 +117,8 @@ class LockDevice(BaseDevice):
                 params=params,
                 headers={"tokenId": auth.token_id},
             )
+
+            # # Force get the devices state
+            # await account.get_devices(force_init=True)
         finally:
             await super().push_state(entity, data)

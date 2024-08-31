@@ -37,11 +37,11 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             try:
-                # For debugging
-                user_input["proxy_config"] = {
-                    "ca_path": "/workspaces/proxyman-ca.pem",
-                    "url": "http://172.16.3.33:8888",
-                }
+                # # For debugging
+                # user_input["proxy_config"] = {
+                #     "ca_path": "/workspaces/proxyman-ca.pem",
+                #     "url": "http://172.16.3.33:8888",
+                # }
 
                 account = XiaoTuAccount(user_input)
                 user = await account.get_user()
