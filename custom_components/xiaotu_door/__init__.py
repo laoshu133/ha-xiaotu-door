@@ -20,7 +20,6 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up XiaoTu Door from a config entry."""
 
-    # _LOGGER.info(entry)
     _LOGGER.info(f"{DOMAIN}: {entry.entry_id}")  # noqa: G004
 
     # Set up one data coordinator per account/config entry
@@ -43,11 +42,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             device_registry.async_update_device(
                 device.id, remove_config_entry_id=entry.entry_id
             )
-
-    # # Initialize the service
-    # entry.service = XiaoTuService(entry.data)
-
-    # await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     return True
 

@@ -11,16 +11,16 @@ from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 
 # from homeassistant.core import HomeAssistant
+from .account import XiaoTuAccount
 from .const import DOMAIN
-from .service import ResError, XiaoTuService
 
 _LOGGER = logging.getLogger(__name__)
 
 STEP_USER_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_HOST, "API Host", "https://api.xxxx.com"): str,
-        vol.Required(CONF_USERNAME): str,
-        vol.Required(CONF_PASSWORD): str,
+        vol.Required(CONF_HOST, "API Host", "https://wap.anjucloud.com"): str,
+        vol.Required(CONF_USERNAME, "WeChat OpenId"): str,
+        vol.Required(CONF_PASSWORD, "XiaoTu ClientId"): str,
     }
 )
 
@@ -37,15 +37,20 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
         if user_input is not None:
             try:
-                await XiaoTuService(user_input).authenticate()
-            except ResError:
-                errors["base"] = "invalid_auth"
+                # For debugging
+                user_input["proxy_config"] = {
+                    "ca_path": "/workspaces/proxyman-ca.pem",
+                    "url": "http://172.16.3.33:8888",
+                }
+
+                account = XiaoTuAccount(user_input)
+                user = await account.get_user()
             except Exception:
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
             else:
                 username = user_input[CONF_USERNAME]
-                title = "XiaoTu Door for " + username
+                title = "XiaoTu Door - " + user.villageName
 
                 await self.async_set_unique_id(username)
                 self._abort_if_unique_id_configured()

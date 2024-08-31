@@ -11,9 +11,9 @@
         "step": {
             "user": {
                 "data": {
-                    "host": "Host",
-                    "password": "Password or token",
-                    "username": "Phone number"
+                    "host": "API Host",
+                    "password": "XiaoTu ClientId",
+                    "username": "WeChat OpenId"
                 }
             }
         }
