@@ -13,7 +13,7 @@
 ## 接入方法
 
 1. 将项目 ha-xiaotu-door 目录部署到自定义组件目录，一般路径为 `~/.homeassistant/custom_components/`
-2. 通过 [HACS](https://hacs.xyz/) 载入自定义存储库(Custom repositories)
+2. 通过 [HACS](https://hacs.xyz/) 载入自定义存储库(Custom repositories)，添加后搜索 `XiaoTu Door` 进行安装
     - 设置URL: https://github.com/laoshu133/ha-xiaotu-door
     - 类别: 集成(Integration)
 
