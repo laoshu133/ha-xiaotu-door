@@ -49,7 +49,7 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
                 # Add init token
                 user_input["init_token"] = {
                     "token_id": account.auth.token_id,
-                    "fetched_at": account.auth.fetched_at,
+                    "fetched_at": account.auth.fetched_at.isoformat(),
                 }
             except Exception:
                 _LOGGER.exception("Unexpected exception")

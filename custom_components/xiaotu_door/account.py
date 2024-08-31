@@ -69,6 +69,7 @@ class XiaoTuAccount:
         """Initialize the account."""
 
         auth = XiaoTuAccountAuth()
+        _LOGGER.info("XiaoTuAccount.config: %s", config)
         api_config = APIConfiguration(**config)
 
         self.auth = auth
