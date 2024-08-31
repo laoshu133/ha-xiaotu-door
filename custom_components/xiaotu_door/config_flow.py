@@ -47,9 +47,10 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
                 user = await account.get_user()
 
                 # Add init token
+                auth = account.api.auth
                 user_input["init_token"] = {
-                    "token_id": account.auth.token_id,
-                    "fetched_at": account.auth.fetched_at.isoformat(),
+                    "token_id": auth.token_id,
+                    "fetched_at": auth.fetched_at.isoformat(),
                 }
             except Exception:
                 _LOGGER.exception("Unexpected exception")

@@ -11,8 +11,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .account import AUTH_VALID_OFFSET, XiaoTuAccount
-from .const import DOMAIN
+from .account import XiaoTuAccount
+from .const import AUTH_VALID_OFFSET, DOMAIN
 from .utils import APIError, AuthError
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,7 +38,7 @@ class XiaoTuCoordinator(DataUpdateCoordinator[None]):
         super().__init__(
             hass,
             _LOGGER,
-            name=f"{DOMAIN}_{entry.entry_id}",
+            name=f"{DOMAIN}.{entry.entry_id}",
             update_interval=AUTH_VALID_OFFSET / 2,
         )
 

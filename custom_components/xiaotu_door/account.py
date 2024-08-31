@@ -2,43 +2,15 @@
 
 from base64 import b64decode
 from dataclasses import dataclass, field
-import datetime
-from hashlib import md5
 
 # import json
 import logging
 
 from .api import API, APIConfiguration
 from .dao import BaseDevice, LockDevice
-
-AUTH_VALID_OFFSET = datetime.timedelta(hours=5)
+from .utils import get_now
 
 _LOGGER = logging.getLogger(__name__)
-
-
-@dataclass
-class XiaoTuAccountAuth:
-    """XiaoTu account authentication data."""
-
-    client_id: str = ""
-    token_id: str = ""
-    fetched_at = None
-
-    @property
-    def uuidString(self) -> str:
-        """Generate a UUID string from the client ID."""
-        return md5(self.client_id)
-
-    def toJSON(self):
-        """Convert to JSON."""
-
-        return {
-            "clientId": self.client_id,
-            "tokenId": self.token_id,
-            "version": "2",
-            "net": "-1",
-            "os": "4",
-        }
 
 
 @dataclass
@@ -70,58 +42,19 @@ class XiaoTuAccount:
 
         _LOGGER.info("XiaoTuAccount.config: %s", config)
         api_config = APIConfiguration(**config)
-        auth = XiaoTuAccountAuth()
 
-        self.auth = auth
         self.api_config = api_config
         self.api = API(self.api_config)
         self.user = XiaoTuUser()
         self.devices = []
         self.fetched_at = None
 
-        # init token
-        init_token = config.get("init_token")
-        if init_token:
-            auth.client_id = api_config.password
-            auth.token_id = init_token.get("token_id", "")
-            auth.fetched_at = datetime.datetime.fromisoformat(
-                init_token.get("fetched_at")
-            )
-
-        _LOGGER.info("XiaoTuAccount.init_auth: %s", self.auth)
-
-    async def get_auth(self) -> None:
-        """Get the authentication data."""
-
-        auth = self.auth
-
-        if (
-            not auth.token_id
-            or not auth.fetched_at
-            or auth.fetched_at + AUTH_VALID_OFFSET < get_now()
-        ):
-            # Update auth
-            auth.client_id = self.api_config.password
-
-            data = {
-                **auth.toJSON(),
-                "openid": self.api_config.username,
-            }
-
-            res = await self.api.post("/userClient/clientV2/loginByOpenId", data=data)
-
-            ret = res.json()["result"]
-            auth.token_id = ret.get("tokenId", ret.get("access_token", ""))
-            auth.fetched_at = get_now()
-
-        return auth
-
     async def get_user(self) -> XiaoTuUser:
         """Get the user info."""
 
         user = self.user
         if not user.userId:
-            auth = await self.get_auth()
+            auth = await self.api.get_auth()
 
             res = await self.api.post(
                 "/userClient/cuserV2/getUserInfoV2", data=auth.toJSON()
@@ -146,7 +79,7 @@ class XiaoTuAccount:
 
         devices = self.devices
         if len(devices) == 0:
-            auth = await self.get_auth()
+            auth = await self.api.get_auth()
             params = {
                 "tokenId": auth.token_id,
             }
@@ -214,24 +147,3 @@ class XiaoTuAccount:
             if device.id.upper() == id.upper():
                 return device
         return None
-
-    def set_token(
-        self,
-        refresh_token: str,
-        access_token: str | None = None,
-    ) -> None:
-        """Overwrite the current value of the XiaoTu tokens."""
-        self.config["refresh_token"] = refresh_token
-
-        if access_token:
-            self.config["access_token"] = access_token
-
-    @property
-    def refresh_token(self) -> str | None:
-        """Returns the current refresh_token."""
-        return self.config["refresh_token"]
-
-
-def get_now():
-    """Get now."""
-    return datetime.datetime.now(datetime.UTC)

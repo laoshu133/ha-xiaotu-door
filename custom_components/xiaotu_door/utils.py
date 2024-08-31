@@ -2,6 +2,7 @@
 
 from collections import deque
 from dataclasses import dataclass
+import datetime
 import json
 import logging
 import mimetypes
@@ -103,6 +104,11 @@ async def handle_httpstatuserror(
 
     if not dont_raise:
         raise _ex_to_raise(_err_message) from ex
+
+
+def get_now():
+    """Get now."""
+    return datetime.datetime.now(datetime.UTC)
 
 
 # Cache response content for logging.

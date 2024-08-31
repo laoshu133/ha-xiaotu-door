@@ -103,7 +103,7 @@ class LockDevice(BaseDevice):
         # Open the door
         try:
             account = entity.coordinator.account
-            auth = await account.get_auth()
+            auth = await account.api.get_auth()
 
             params = {
                 "clientId": auth.client_id,
