@@ -26,8 +26,14 @@ class XiaoTuCoordinator(DataUpdateCoordinator[None]):
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         """Initialize account-wide BMW data updater."""
 
-        self.account = XiaoTuAccount(entry.data)
         self.config_entry = entry
+        self.account = XiaoTuAccount(entry.data)
+
+        # Remove init token from entry data
+        data = entry.data.copy()
+        _LOGGER.info("XiaoTuCoordinator.clear: %s", data)
+        data.pop("init_token", None)
+        hass.config_entries.async_update_entry(self.config_entry, data=data)
 
         super().__init__(
             hass,

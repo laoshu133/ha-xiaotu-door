@@ -68,9 +68,9 @@ class XiaoTuAccount:
     def __init__(self, config: dict) -> None:
         """Initialize the account."""
 
-        auth = XiaoTuAccountAuth()
         _LOGGER.info("XiaoTuAccount.config: %s", config)
         api_config = APIConfiguration(**config)
+        auth = XiaoTuAccountAuth()
 
         self.auth = auth
         self.api_config = api_config
