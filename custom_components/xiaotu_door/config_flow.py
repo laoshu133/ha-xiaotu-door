@@ -51,8 +51,6 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
                     "token_id": account.auth.token_id,
                     "fetched_at": account.auth.fetched_at,
                 }
-
-                _LOGGER.info("User user_input: %s", user_input)
             except Exception:
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
