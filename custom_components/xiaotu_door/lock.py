@@ -8,7 +8,7 @@ from homeassistant.components.lock import LockEntity
 from homeassistant.core import HomeAssistant, callback
 
 from .coordinator import XiaoTuCoordinator
-from .dao import LockDevice
+from .dao import DaoEntity, XiaoTuDevice
 from .entity import BaseEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,10 +19,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
     coordinator = config_entry.coordinator
 
     entities = [
-        XiaoTuDoorLock(coordinator, device)
+        XiaoTuDoorLock(coordinator, device, daoEntity)
         for device in coordinator.account.devices
-        if device.type == "lock"
+        if device.type == "village"
+        for daoEntity in await device.get_entities()
+        if daoEntity.type == "lock"
     ]
+
+    _LOGGER.info("Lock.setup: %s", entities)
 
     async_add_entities(entities)
 
@@ -30,14 +34,23 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
 class XiaoTuDoorLock(BaseEntity, LockEntity):
     """A XiaoTu Door Lock."""
 
-    device: LockDevice
+    device: XiaoTuDevice
     _attr_translation_key = "lock"
 
-    def __init__(self, coordinator: XiaoTuCoordinator, device: LockDevice) -> None:
+    def __init__(
+        self,
+        coordinator: XiaoTuCoordinator,
+        device: XiaoTuDevice,
+        daoEntity: DaoEntity,
+    ) -> None:
         """Initialize the lock."""
-        super().__init__(coordinator, device)
+        super().__init__(coordinator, device, daoEntity)
 
-        self._attr_is_locked = device.is_locked
+        self._attr_is_locked = self.get_locked_state()
+
+    def get_locked_state(self) -> bool:
+        """Get lock locked state."""
+        return self.daoEntity.get("isOpen", "2") == "2"
 
     async def async_lock(self, **kwargs) -> None:
         """Lock the door."""
@@ -46,7 +59,7 @@ class XiaoTuDoorLock(BaseEntity, LockEntity):
         self._attr_is_locking = True
         self.async_write_ha_state()
 
-        await self.device.push_state(self, {"is_locked": True})
+        await self.device.push_entity_state(self, {"is_locked": True})
 
     async def async_unlock(self, **kwargs) -> None:
         """Unlock the door."""
@@ -55,16 +68,17 @@ class XiaoTuDoorLock(BaseEntity, LockEntity):
         self._attr_is_unlocking = True
         self.async_write_ha_state()
 
-        await self.device.push_state(self, {"is_locked": False})
+        await self.device.push_entity_state(self, {"is_locked": False})
 
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        _LOGGER.info("Updating lock data of %s", self.device.name)
+        _LOGGER.info("Updating lock data of %s", self.daoEntity.name)
 
         # Update the HA state
-        if self.device.is_locked != self._attr_is_locked:
-            self._attr_is_locked = self.device.is_locked
+        is_locked = self.get_locked_state()
+        if self._attr_is_locked != is_locked:
+            self._attr_is_locked = is_locked
 
         # Reset ing state
         self._attr_is_unlocking = False

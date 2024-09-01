@@ -99,7 +99,7 @@ class API(httpx.AsyncClient):
                 init_token.get("fetched_at")
             )
 
-        _LOGGER.info("API.init_auth: %s", self.auth)
+        _LOGGER.info("API.init_auth: %s", self.auth.toJSON(auth))
 
         # Proxy config
         proxy_config = config.proxy_config or {}

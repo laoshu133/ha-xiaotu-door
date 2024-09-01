@@ -31,7 +31,7 @@ class XiaoTuCoordinator(DataUpdateCoordinator[None]):
 
         # Remove init token from entry data
         data = entry.data.copy()
-        _LOGGER.info("XiaoTuCoordinator.clear: %s", data)
+        _LOGGER.info("XiaoTuCoordinator.init_config: %s", data)
         data.pop("init_token", None)
         hass.config_entries.async_update_entry(self.config_entry, data=data)
 
