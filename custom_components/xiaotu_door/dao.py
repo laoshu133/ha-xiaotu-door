@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import logging
 from typing import TYPE_CHECKING
 
-from .utils import get_now
+from .utils import AuthError, get_now
 
 if TYPE_CHECKING:
     from .entity import BaseEntity
@@ -162,7 +162,11 @@ class BaseDevice:
         """Push state to server."""
 
         try:
-            await self._push_entity_state(entity, data)
+            try:
+                await self._push_entity_state(entity, data)
+            except AuthError:
+                # Try again when the authorization expires
+                await self._push_entity_state(entity, data)
 
             # Always delay for a few seconds
             await asyncio.sleep(0.6)
