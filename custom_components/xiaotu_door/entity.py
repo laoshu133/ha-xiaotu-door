@@ -42,7 +42,7 @@ class BaseEntity(CoordinatorEntity[XiaoTuCoordinator]):
             name=device.name,
         )
 
-        _LOGGER.info("Entity.setup_device_info: %s", self._attr_device_info)
+        # _LOGGER.info("Entity.setup_device_info: %s", self._attr_device_info)
 
     async def async_added_to_hass(self) -> None:
         """When entity is added to hass."""

@@ -5,7 +5,6 @@ from dataclasses import dataclass
 import logging
 from typing import TYPE_CHECKING
 
-from .const import DOMAIN
 from .utils import get_now
 
 if TYPE_CHECKING:
@@ -26,7 +25,7 @@ class DaoEntity:
 
         self.update(data)
 
-    def get(self, key: str, default_val):
+    def get(self, key: str, default_val=""):
         """Get value by key."""
         return self.data.get(key, default_val)
 
@@ -163,12 +162,12 @@ class BaseDevice:
         """Push state to server."""
 
         try:
-            self._push_entity_state(entity, data)
+            await self._push_entity_state(entity, data)
 
             # Always delay for a few seconds
             await asyncio.sleep(0.6)
         finally:
-            entity.update(data)
+            self.update_state(data)
 
             # Always update the listeners to get the latest state
             if entity.coordinator:
@@ -233,10 +232,12 @@ class XiaoTuDevice(BaseDevice):
         if not data.get("is_locked"):
             params = {
                 "clientId": auth.client_id,
-                "doorId": self.doorId,
+                "doorId": entity.daoEntity.get("doorId"),
                 "longitude": "",
                 "latitude": "",
             }
+
+            _LOGGER.info("XiaoTuDevice._push_entity_state: %s", params)
 
             await account.api.get(
                 "/wap/door/openDoorNew",

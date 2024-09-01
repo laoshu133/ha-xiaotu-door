@@ -26,8 +26,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
         if daoEntity.type == "lock"
     ]
 
-    _LOGGER.info("Lock.setup: %s", entities)
-
     async_add_entities(entities)
 
 
