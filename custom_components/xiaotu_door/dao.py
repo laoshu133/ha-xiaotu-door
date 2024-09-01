@@ -169,7 +169,7 @@ class BaseDevice:
                 await self._push_entity_state(entity, data)
 
             # Always delay for a few seconds
-            await asyncio.sleep(0.8)
+            await asyncio.sleep(1.8)
         finally:
             self.update_state(data)
 
