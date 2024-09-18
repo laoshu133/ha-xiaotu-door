@@ -38,7 +38,7 @@ class BaseEntity(CoordinatorEntity[XiaoTuCoordinator]):
             serial_number=device.serial_number,
             manufacturer=device.brand_name,
             identifiers={(DOMAIN, device.id)},
-            model={(DOMAIN, ".", device.type)},
+            model=f"{DOMAIN}.{device.type}",
             name=device.name,
         )
 
