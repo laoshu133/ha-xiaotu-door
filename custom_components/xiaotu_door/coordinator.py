@@ -24,7 +24,7 @@ class XiaoTuCoordinator(DataUpdateCoordinator[None]):
     account: XiaoTuAccount
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
-        """Initialize account-wide BMW data updater."""
+        """Initialize a data updater."""
 
         self.config_entry = entry
         self.account = XiaoTuAccount(entry.data)
