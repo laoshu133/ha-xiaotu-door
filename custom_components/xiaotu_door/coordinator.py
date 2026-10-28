@@ -45,6 +45,11 @@ class XiaoTuCoordinator(DataUpdateCoordinator[None]):
         # Default to false on init so _async_update_data logic works
         self.last_update_success = False
 
+    async def async_close(self) -> None:
+        """Close the account's HTTP client."""
+
+        await self.account.async_close()
+
     async def _async_update_data(self) -> None:
         """Fetch data from XiaoTu."""
         # old_refresh_token = self.account.refresh_token

@@ -53,6 +53,11 @@ class XiaoTuAccount:
 
         self.fetched_at = None
 
+    async def async_close(self) -> None:
+        """Close the account's HTTP client."""
+
+        await self.api.aclose()
+
     async def get_user(self, force_init: bool = False) -> XiaoTuUser:
         """Get the user info."""
 
@@ -61,7 +66,7 @@ class XiaoTuAccount:
             auth = await self.api.get_auth()
 
             res = await self.api.post(
-                "/userClient/cuserV2/getUserInfoV2", data=auth.toJSON(auth)
+                "/userClient/cuserV2/getUserInfoV2", data=auth.toJSON()
             )
             ret = res.json()["result"]
 

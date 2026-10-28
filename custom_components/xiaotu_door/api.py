@@ -2,9 +2,10 @@
 
 import asyncio
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import datetime
 from hashlib import md5
+import inspect
 import logging
 import math
 from typing import collections
@@ -63,7 +64,7 @@ class APIConfiguration:
     username: str = ""
     password: str = ""
 
-    auth: APIAuth = APIAuth
+    auth: APIAuth = field(default_factory=APIAuth)
 
     proxy_config: dict | None = None
 
@@ -77,13 +78,18 @@ class APIConfiguration:
         RESPONSE_STORE.clear()
 
 
-class API(httpx.AsyncClient):
-    """Async HTTP API based on `httpx.AsyncClient`."""
+class API:
+    """Async XiaoTu API with lazy, executor-backed client construction."""
 
     def __init__(self, config: APIConfiguration, *args, **kwargs) -> None:
         """Initialize the API."""
 
         self.config = config
+        self._client: httpx.AsyncClient | None = None
+        self._client_args = args
+        self._client_kwargs = self._build_client_kwargs(kwargs)
+        self._client_lock: asyncio.Lock | None = None
+        self._closed = False
 
         # Make sure we have an auth
         if not config.auth:
@@ -99,23 +105,30 @@ class API(httpx.AsyncClient):
                 init_token.get("fetched_at")
             )
 
-        _LOGGER.info("API.init_auth: %s", self.auth.toJSON(auth))
+        _LOGGER.info("API.init_auth: %s", auth.toJSON())
+
+    def _build_client_kwargs(self, kwargs: dict) -> dict:
+        """Build AsyncClient arguments without constructing the client."""
 
         # Proxy config
-        proxy_config = config.proxy_config or {}
+        proxy_config = self.config.proxy_config or {}
         if proxy_config.get("url"):
-            kwargs["proxies"] = {
-                "http://": proxy_config.get("url"),
-                "https://": proxy_config.get("url"),
-            }
+            proxy_url = proxy_config["url"]
+            if "proxy" in inspect.signature(httpx.AsyncClient).parameters:
+                kwargs["proxy"] = proxy_url
+            else:
+                kwargs["proxies"] = {
+                    "http://": proxy_url,
+                    "https://": proxy_url,
+                }
         if proxy_config.get("ca_path"):
-            kwargs["verify"] = config.proxy_config["ca_path"]
+            kwargs["verify"] = proxy_config["ca_path"]
 
         # Increase timeout
-        kwargs["timeout"] = config.timeout
+        kwargs["timeout"] = self.config.timeout
 
         # Set default values
-        kwargs["base_url"] = kwargs.get("base_url") or getattr(config, CONF_HOST)
+        kwargs["base_url"] = kwargs.get("base_url") or getattr(self.config, CONF_HOST)
         kwargs["headers"] = self.generate_header(kwargs.get("headers"), kwargs)
 
         # Register event hooks
@@ -126,7 +139,7 @@ class API(httpx.AsyncClient):
             await response.aread()
             RESPONSE_STORE.append(anonymize_response(response))
 
-        if config.log_responses:
+        if self.config.log_responses:
             kwargs["event_hooks"]["response"].append(log_response)
 
         # Event hook which calls raise_for_status on all requests
@@ -148,7 +161,7 @@ class API(httpx.AsyncClient):
             if json_code != 200:
                 if json_code == 301:
                     # Reset token_id on Unauthorized
-                    config.auth.token_id = ""
+                    self.config.auth.token_id = ""
 
                     raise AuthError(
                         response=response, request=None, message="Unauthorized"
@@ -160,7 +173,67 @@ class API(httpx.AsyncClient):
 
         kwargs["event_hooks"]["response"].append(raise_for_status_event_handler)
 
-        super().__init__(*args, **kwargs)
+        return kwargs
+
+    def _get_client_lock(self) -> asyncio.Lock:
+        """Return the lock used to serialize lazy client construction."""
+
+        if self._client_lock is None:
+            self._client_lock = asyncio.Lock()
+        return self._client_lock
+
+    async def _async_get_client(self) -> httpx.AsyncClient:
+        """Construct the HTTP client away from the Home Assistant event loop."""
+
+        if self._closed:
+            raise RuntimeError("XiaoTu API client is closed")
+
+        async with self._get_client_lock():
+            if self._closed:
+                raise RuntimeError("XiaoTu API client is closed")
+            if self._client is None:
+                client = await asyncio.to_thread(
+                    httpx.AsyncClient,
+                    *self._client_args,
+                    **self._client_kwargs,
+                )
+                if self._closed:
+                    await client.aclose()
+                    raise RuntimeError("XiaoTu API client is closed")
+                self._client = client
+
+        client = self._client
+        if client is None:
+            raise RuntimeError("XiaoTu API client was not initialized")
+        return client
+
+    async def request(self, *args, **kwargs) -> httpx.Response:
+        """Send a request using the lazily initialized client."""
+
+        client = await self._async_get_client()
+        return await client.request(*args, **kwargs)
+
+    async def get(self, *args, **kwargs) -> httpx.Response:
+        """Send a GET request."""
+
+        client = await self._async_get_client()
+        return await client.get(*args, **kwargs)
+
+    async def post(self, *args, **kwargs) -> httpx.Response:
+        """Send a POST request."""
+
+        client = await self._async_get_client()
+        return await client.post(*args, **kwargs)
+
+    async def aclose(self) -> None:
+        """Close the HTTP client and release its resources."""
+
+        async with self._get_client_lock():
+            self._closed = True
+            client = self._client
+            self._client = None
+            if client is not None:
+                await client.aclose()
 
     def generate_header(self, data: dict | None, all_data: dict) -> dict[str, str]:
         """Generate a header for HTTP requests to the server."""
@@ -176,7 +249,7 @@ class API(httpx.AsyncClient):
 
         return headers
 
-    async def get_auth(self) -> None:
+    async def get_auth(self) -> APIAuth:
         """Get the authentication data."""
 
         auth = self.auth
@@ -190,7 +263,7 @@ class API(httpx.AsyncClient):
             auth.client_id = self.config.password
 
             data = {
-                **auth.toJSON(auth),
+                **auth.toJSON(),
                 "openid": self.config.username,
             }
 
