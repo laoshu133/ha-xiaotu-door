@@ -121,7 +121,7 @@ class BaseDevice:
 
         # If entity already exists, just update it's state
         if entity:
-            entity.update_state(data)
+            entity.update(data)
         else:
             entity = self._add_entity(data)
 
@@ -218,13 +218,13 @@ class XiaoTuDevice(BaseDevice):
 
     def _update_entity(self, entity: DaoEntity, data: dict) -> None:
         """Update entity with given data."""
-        super()._update_entity(data)
+        super()._update_entity(entity, data)
 
         # self.is_locked = data.get("isOpen", "2") == "2"
 
         img_map = data.get("imageItem", {})
-        self.data.update(
-            {"image": img_map.get("originalImage", self.data.get("image"))}
+        entity.update(
+            {"image": img_map.get("originalImage", entity.get("image"))}
         )
 
     async def _push_entity_state(self, entity, data: dict) -> None:

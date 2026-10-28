@@ -24,9 +24,15 @@ class APIError(Exception):
     """General API error."""
 
     def __init__(
-        self, message: str, *, request: httpx.Request, response: httpx.Response
+        self,
+        message: str,
+        *,
+        request: httpx.Request | None = None,
+        response: httpx.Response | None = None,
     ) -> None:
         """Initialize the API error."""
+        self.request = request
+        self.response = response
         super().__init__(message)
 
 
@@ -103,7 +109,11 @@ async def handle_httpstatuserror(
     _logger.log(_level, "%s due to %s", _ex_to_raise.__name__, _err_message)
 
     if not dont_raise:
-        raise _ex_to_raise(_err_message) from ex
+        raise _ex_to_raise(
+            _err_message,
+            request=ex.request,
+            response=ex.response,
+        ) from ex
 
 
 def get_now():

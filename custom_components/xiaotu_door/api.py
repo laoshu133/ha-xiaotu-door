@@ -2,6 +2,7 @@
 
 import asyncio
 from collections import defaultdict
+from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 import datetime
 from hashlib import md5
@@ -224,6 +225,67 @@ class API:
 
         client = await self._async_get_client()
         return await client.post(*args, **kwargs)
+
+    async def put(self, *args, **kwargs) -> httpx.Response:
+        """Send a PUT request."""
+
+        client = await self._async_get_client()
+        return await client.put(*args, **kwargs)
+
+    async def patch(self, *args, **kwargs) -> httpx.Response:
+        """Send a PATCH request."""
+
+        client = await self._async_get_client()
+        return await client.patch(*args, **kwargs)
+
+    async def delete(self, *args, **kwargs) -> httpx.Response:
+        """Send a DELETE request."""
+
+        client = await self._async_get_client()
+        return await client.delete(*args, **kwargs)
+
+    async def head(self, *args, **kwargs) -> httpx.Response:
+        """Send a HEAD request."""
+
+        client = await self._async_get_client()
+        return await client.head(*args, **kwargs)
+
+    async def options(self, *args, **kwargs) -> httpx.Response:
+        """Send an OPTIONS request."""
+
+        client = await self._async_get_client()
+        return await client.options(*args, **kwargs)
+
+    async def send(self, *args, **kwargs) -> httpx.Response:
+        """Send a prepared request."""
+
+        client = await self._async_get_client()
+        return await client.send(*args, **kwargs)
+
+    @asynccontextmanager
+    async def stream(self, *args, **kwargs):
+        """Stream a response using the lazily initialized client."""
+
+        client = await self._async_get_client()
+        async with client.stream(*args, **kwargs) as response:
+            yield response
+
+    async def __aenter__(self):
+        """Enter an async client context."""
+
+        await self._async_get_client()
+        return self
+
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
+        """Exit an async client context and close the client."""
+
+        await self.aclose()
+
+    @property
+    def is_closed(self) -> bool:
+        """Return whether the API client has been closed."""
+
+        return self._closed
 
     async def aclose(self) -> None:
         """Close the HTTP client and release its resources."""
